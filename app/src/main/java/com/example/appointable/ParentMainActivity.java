@@ -2,11 +2,7 @@ package com.example.appointable;
 
 import android.os.Bundle;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -14,7 +10,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class ParentMainActivity extends AppCompatActivity {
 
     BottomNavigationView bottomNavigationView;
     Map<Integer, Fragment> fragmentMap = new HashMap<>();
@@ -22,19 +18,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_parent_main);
 
         bottomNavigationView = findViewById(R.id.bottom_navigation);
 
         // Register all fragments here
-        fragmentMap.put(R.id.nav_home, new HomeFragment());
+        fragmentMap.put(R.id.nav_home, new ParentHomeFragment());
         fragmentMap.put(R.id.nav_appointments, new AppointmentsFragment());
         fragmentMap.put(R.id.nav_students, new StudentsFragment());
         fragmentMap.put(R.id.nav_messages, new MessagesFragment());
         fragmentMap.put(R.id.nav_profile, new ProfileFragment());
 
         // Default fragment
-        loadFragment(new HomeFragment());
+        loadFragment(new ParentHomeFragment());
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment fragment = fragmentMap.get(item.getItemId());

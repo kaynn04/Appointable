@@ -11,16 +11,24 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.UnderlineSpan;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class LoginActivity extends AppCompatActivity {
 
     private Button btnSignIn;
-    private TextView tvSignUp;
-    private TextView tvForgotPassword;
+    private TextView tvSignUp, tvForgotPassword;
+
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,22 +36,22 @@ public class LoginActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
 
+        // Initialize Firebase
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+
         // UI elements
         btnSignIn = findViewById(R.id.btnSignIn);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
-        tvSignUp = findViewById(R.id.tvSignUp);   // this matches your XML id
-
-        // ------------------------------
-        //  SIGN IN BUTTON → MAIN SCREEN
-        // ------------------------------
-        btnSignIn.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
-        });
+        tvSignUp = findViewById(R.id.tvSignUp);
 
         // -------------------------------------
-        //  FORGOT PASSWORD → ForgotPasswordActivity
+        // SIGN IN BUTTON → Firebase login
+        // -------------------------------------
+        btnSignIn.setOnClickListener(v -> loginUser());
+
+        // -------------------------------------
+        // FORGOT PASSWORD → ForgotPasswordActivity
         // -------------------------------------
         tvForgotPassword.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
@@ -51,17 +59,14 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // -------------------------------------
-        //  CLICKABLE "SIGN UP" ONLY
+        // CLICKABLE "SIGN UP" text only
         // -------------------------------------
         String text = "Still don’t have an account? Sign Up";
-
         SpannableString spannableString = new SpannableString(text);
 
-        // find "Sign Up" position in text
         int startIndex = text.indexOf("Sign Up");
         int endIndex = startIndex + "Sign Up".length();
 
-        // Clickable behavior
         ClickableSpan clickableSpan = new ClickableSpan() {
             @Override
             public void onClick(View widget) {
@@ -70,35 +75,77 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
-        // Apply clickable span
         spannableString.setSpan(clickableSpan, startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(new ForegroundColorSpan(Color.BLUE), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(new UnderlineSpan(), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        // Make "Sign Up" blue
-        spannableString.setSpan(new ForegroundColorSpan(Color.BLUE),
-                startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        // underline Sign Up
-        spannableString.setSpan(new UnderlineSpan(),
-                startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        // Set styled text to your TextView
         tvSignUp.setText(spannableString);
         tvSignUp.setMovementMethod(LinkMovementMethod.getInstance());
         tvSignUp.setHighlightColor(Color.TRANSPARENT);
     }
+
+    // -----------------------------------------------------------
+    // LOGIN USER WITH FIREBASE
+    // -----------------------------------------------------------
+    private void loginUser() {
+        EditText etEmail = findViewById(R.id.etEmail);
+        EditText etPassword = findViewById(R.id.etPassword);
+
+        String email = etEmail.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
+
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Please enter email and password.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnSuccessListener(authResult -> {
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    if (user != null) {
+                        checkUserRoleAndRedirect(user.getUid());
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(LoginActivity.this, e.getMessage(), Toast.LENGTH_LONG).show()
+                );
+    }
+
+    // -----------------------------------------------------------
+    // CHECK USER ROLE IN FIRESTORE AND REDIRECT
+    // -----------------------------------------------------------
+    private void checkUserRoleAndRedirect(String uid) {
+
+        db.collection("users").document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        Toast.makeText(this, "User data not found.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    String role = doc.getString("role");
+
+                    if (role == null) {
+                        Toast.makeText(this, "Role not found for this account.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    if (role.equals("Parent")) {
+                        startActivity(new Intent(this, ParentMainActivity.class));
+                    }
+                    else if (role.equals("Teacher")) {
+                        startActivity(new Intent(this, TeacherMainActivity.class));
+                    }
+                    else {
+                        Toast.makeText(this, "Unknown role: " + role, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    finish(); // Prevent returning to login
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error loading user role: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                );
+    }
 }
-
-
-//    @Override
-//    protected void onStart() {
-//        super.onStart();
-//        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-//
-//        if (currentUser != null) {
-//            // User is already logged in → go to main screen
-//            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-//            startActivity(intent);
-//            finish();
-//        }
-//    }
-

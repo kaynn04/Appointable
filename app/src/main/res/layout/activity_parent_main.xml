@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ParentMainActivity">
 
     <!-- Fragment container -->
     <FrameLayout
@@ -24,7 +24,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@android:color/white"
-        app:menu="@menu/bottom_nav_menu"
+        app:menu="@menu/bottom_parent_nav_menu"
         app:labelVisibilityMode="labeled"
         app:itemIconTint="@color/black"
         app:itemTextColor="@color/black"
