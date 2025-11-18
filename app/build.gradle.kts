@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services") version "4.4.4" apply false
 }
 
 android {
@@ -31,20 +32,27 @@ android {
     }
 }
 
-dependencies {
-    dependencies {
-        implementation(libs.appcompat)
-        implementation(libs.material)
-        implementation(libs.activity)
-        implementation(libs.constraintlayout)
+dependencies { // Single, correct block
+    implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.activity)
+    implementation(libs.constraintlayout)
 
-        implementation(libs.fragment)
+    implementation(libs.fragment)
 
-        implementation(libs.firebase.auth)
+    // STEP 1: Implement the BOM as a platform
+    implementation(platform(libs.firebase.bom))
 
-        testImplementation(libs.junit)
-        androidTestImplementation(libs.ext.junit)
-        androidTestImplementation(libs.espresso.core)
-    }
+    // STEP 2: Implement the individual libraries (versions are inherited from the BOM)
+    implementation(libs.google.firebase.auth)
+    implementation(libs.google.firebase.firestore)
 
+    // ... your play services auth dependency
+    implementation(libs.play.services.auth)
+
+    apply(plugin = "com.google.gms.google-services")
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
 }
