@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">appointable</string>
+    <string name="toggle_password_visibility" />
+    <string name="home">Home</string>
+    <string name="appointments">Appointments</string>
+    <string name="students">Students</string>
+    <string name="messages">Messages</string>
+    <string name="profile">Profile</string>
+</resources>
